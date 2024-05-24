@@ -1,39 +1,39 @@
 {
-	"name": "insite-ws-transfers",
-	"version": "1.0.469",
-	"description": "inSite file transfers over WebSockets",
-	"type": "module",
-	"main": "./dist/node.js",
-	"module": "./dist/node.js",
-	"exports": {
-		".": "./dist/node.js",
-		"./node": "./dist/node.js",
-		"./browser": "./dist/browser.js"
-	},
-	"packageManager": "bun@1.1.8",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"build": "bun .conveyer.js"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/nesvet/insite-ws-transfers.git"
-	},
-	"keywords": [
-		"insite",
-		"ws",
-		"websockets",
-		"files",
-		"transfers"
-	],
-	"author": "Eugene Nesvetaev <dev@nesvet.dev> (https://nesvet.dev/)",
-	"license": "MIT",
-	"dependencies": {
-		"@nesvet/n": "^1",
-		"mime": "^2"
-	},
-	"devDependencies": {
-		"@nesvet/conveyer": "^2",
-		"@nesvet/eslint-config": "^1"
-	}
+  "name": "insite-ws-transfers",
+  "version": "1.0.469",
+  "description": "inSite file transfers over WebSockets",
+  "type": "module",
+  "main": "./dist/node.js",
+  "module": "./dist/node.js",
+  "exports": {
+    ".": "./dist/node.js",
+    "./node": "./dist/node.js",
+    "./browser": "./dist/browser.js"
+  },
+  "packageManager": "bun@1.1.9",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "bun .conveyer.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nesvet/insite-ws-transfers.git"
+  },
+  "keywords": [
+    "insite",
+    "ws",
+    "websockets",
+    "files",
+    "transfers"
+  ],
+  "author": "Eugene Nesvetaev <dev@nesvet.dev> (https://nesvet.dev/)",
+  "license": "MIT",
+  "dependencies": {
+    "@nesvet/n": "^1",
+    "mime": "^2"
+  },
+  "devDependencies": {
+    "@nesvet/conveyer": "^2",
+    "@nesvet/eslint-config": "^1"
+  }
 }

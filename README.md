@@ -9,5 +9,5 @@ $ npm install insite-ws-transfers
 Or
 
 ```sh
-$ yarn add insite-ws-transfers
+$ bun add insite-ws-transfers
 ```
