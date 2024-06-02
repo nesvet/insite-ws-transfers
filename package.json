@@ -1,6 +1,6 @@
 {
   "name": "insite-ws-transfers",
-  "version": "1.0.470",
+  "version": "1.0.471",
   "description": "inSite file transfers over WebSockets",
   "type": "module",
   "main": "./dist/node.js",
@@ -10,7 +10,7 @@
     "./node": "./dist/node.js",
     "./browser": "./dist/browser.js"
   },
-  "packageManager": "bun@1.1.9",
+  "packageManager": "bun@1.1.12",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "bun .conveyer.js"
