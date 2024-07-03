@@ -7,7 +7,7 @@ export class OutgoingTransport {
 		ws.outgoingTransport = this;
 		
 		if (ws.isWebSocketServer) {
-			ws.options.WebSocket.prototype.transfer = OutgoingTransport.transfer;
+			ws.on("client-connect", OutgoingTransport.handleClientConnect);
 			
 			ws.on(`client-message:${headers.confirm}`, (...args) => OutgoingTransport.handleConfirm.call(...args));
 			ws.on(`client-message:${headers.progress}`, (...args) => OutgoingTransport.handleProgress.call(...args));
@@ -53,6 +53,14 @@ export class OutgoingTransport {
 	
 	static handleError(id, errorMessage) {
 		(this.wss ?? this).outgoingTransport.transfers.get(id)?.throw(errorMessage);
+		
+	}
+	
+	
+	static handleClientConnect(ws) {
+		Object.assign(ws, {
+			transfer: OutgoingTransport.transfer
+		});
 		
 	}
 	
