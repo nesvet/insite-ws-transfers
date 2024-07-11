@@ -44,7 +44,7 @@ export class IncomingTransport<PT extends typeof IncomingTransport, FT extends t
 		
 	}
 	
-	sizeLimit: number;
+	sizeLimit;
 	
 	[listenersSymbol] = new Map<string, Set<IncomingTransferListener<FT>>>();
 	

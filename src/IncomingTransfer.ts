@@ -13,7 +13,6 @@ import {
 	CallArgs,
 	IncomingChunk,
 	IncomingData,
-	IncomingTransferListener,
 	IncomingTransferMethods,
 	IncomingTransferProps,
 	IncomingTransferTypes
@@ -31,7 +30,7 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		
 		this.transport = transport;
 		this.ws = ws;
-		this[callArgsSymbol] = "wss" in ws ? [ ws.wss!, ws ] as const : [ ws as InSiteWebSocket ] as const;
+		this[callArgsSymbol] = ws.isWebSocketServerClient ? [ ws.wss!, ws ] as const : [ ws ] as const;
 		this.kind = kind;
 		this.id = id;
 		this.type = type;
@@ -48,20 +47,20 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		
 	}
 	
-	transport: IncomingTransport<PT, FT>;
-	ws: InSiteWebSocket | InSiteWebSocketServerClient;
-	[callArgsSymbol]: [ InSiteWebSocket ] | [ InSiteWebSocketServer, InSiteWebSocketServerClient ];
-	kind: string;
-	id: string;
+	transport;
+	ws;
+	[callArgsSymbol]: readonly [InSiteWebSocket] | readonly [InSiteWebSocketServer, InSiteWebSocketServerClient];
+	kind;
+	id;
 	type: string;
-	collect: boolean;
-	encoding: IncomingTransferProps<StringKey<FT["types"]>>["encoding"];
-	size: number;
-	metadata: Record<string, unknown>;
-	listeners: Set<IncomingTransferListener<FT>>;
-	#setupPromise: Promise<void>;
-	data?: IncomingData;
+	collect;
+	encoding;
+	size;
+	metadata;
+	listeners;
+	#setupPromise;
 	
+	data?: IncomingData;
 	#methods?: IncomingTransferMethods<FT>;
 	isAborted = false;
 	isAbortedBySender = false;

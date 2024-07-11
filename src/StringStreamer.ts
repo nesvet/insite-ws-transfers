@@ -19,9 +19,9 @@ export class StringStreamer {
 		
 	}
 	
-	string: string;
-	size: number;
-	chunkSize: number;
+	string;
+	size;
+	chunkSize;
 	listener?: Listener;
 	
 	#start = 0;

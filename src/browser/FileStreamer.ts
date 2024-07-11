@@ -24,10 +24,10 @@ export class FileStreamer {
 		
 	}
 	
-	file: File;
-	size: number;
-	chunkSize: number;
-	fileReader: FileReader;
+	file;
+	size;
+	chunkSize;
+	fileReader;
 	listener?: Listener;
 	
 	#start = 0;

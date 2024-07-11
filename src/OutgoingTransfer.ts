@@ -13,7 +13,6 @@ import { StringStreamer } from "./StringStreamer";
 import {
 	CallArgs,
 	OutgoingChunk,
-	OutgoingData,
 	OutgoingTransferMethods,
 	OutgoingTransferProps,
 	OutgoingTransferTypes
@@ -48,7 +47,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		
 		this.transport = transport;
 		this.ws = ws;
-		this[callArgsSymbol] = "wss" in ws ? [ ws.wss!, ws ] as const : [ ws as InSiteWebSocket ] as const;
+		this[callArgsSymbol] = ws.isWebSocketServerClient ? [ ws.wss!, ws ] as const : [ ws ] as const;
 		this.kind = kind;
 		this.data = data;
 		this.type = type;
@@ -75,23 +74,23 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		
 	}
 	
-	transport: OutgoingTransport<PT, FT>;
-	ws: InSiteWebSocket | InSiteWebSocketServerClient;
-	[callArgsSymbol]: [ InSiteWebSocket ] | [ InSiteWebSocketServer, InSiteWebSocketServerClient ];
-	kind: string;
-	data?: OutgoingData;
+	transport;
+	ws;
+	[callArgsSymbol]: readonly [InSiteWebSocket] | readonly [InSiteWebSocketServer, InSiteWebSocketServerClient];
+	kind;
+	data?;
 	type: string;
-	collect: boolean;
-	metadata: Record<string, unknown>;
-	size: number;
-	chunkSize: number;
-	encoding: OutgoingTransferProps<FT>["encoding"];
-	onBegin?: OutgoingTransferProps<FT>["onBegin"];
-	onSenderProgress?: OutgoingTransferProps<FT>["onSenderProgress"];
-	onProgress?: OutgoingTransferProps<FT>["onProgress"];
-	onEnd?: OutgoingTransferProps<FT>["onEnd"];
-	onError?: OutgoingTransferProps<FT>["onError"];
-	#setupPromise: Promise<void>;
+	collect;
+	metadata;
+	size;
+	encoding;
+	chunkSize;
+	onBegin?;
+	onSenderProgress?;
+	onProgress?;
+	onEnd?;
+	onError?;
+	#setupPromise;
 	
 	id = uid();
 	#methods?: OutgoingTransferMethods<FT>;
