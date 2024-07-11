@@ -32,11 +32,12 @@
   "dependencies": {
     "@nesvet/n": "^1.0.66",
     "mime": "^4.0.4",
-    "insite-ws": "^2.0.3"
+    "insite-ws": "^2.0.4"
   },
   "devDependencies": {
     "@nesvet/conveyer": "^2.2.1",
     "@nesvet/eslint-config": "^2.0.23",
-    "@types/node": "^20.14.10"
+    "@types/node": "^20.14.10",
+    "@types/ws": "^8.5.10"
   }
 }
