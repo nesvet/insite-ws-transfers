@@ -1,5 +1,13 @@
+import { StreamerOptions } from "./types";
+
+
+type Listener = {
+	(chunk: string): Promise<void> | void;
+};
+
+
 export class StringStreamer {
-	constructor(string, options = {}) {
+	constructor(string: string, options: StreamerOptions = {}) {
 		this.string = string;
 		this.size = this.string.length;
 		
@@ -11,12 +19,17 @@ export class StringStreamer {
 		
 	}
 	
+	string: string;
+	size: number;
+	chunkSize: number;
+	listener?: Listener;
+	
 	#start = 0;
 	#end = 0;
 	
 	isAborted = false;
 	
-	start(listener) {
+	start(listener: Listener) {
 		this.listener = listener;
 		
 		this.#next();
@@ -28,10 +41,10 @@ export class StringStreamer {
 		if (!this.isAborted) {
 			this.#end = Math.min(this.#start + this.chunkSize, this.size);
 			
-			const chunk = await new Promise(resolve => resolve(this.string.slice(this.#start, this.#end)));
+			const chunk = await new Promise<string>(resolve => { resolve(this.string.slice(this.#start, this.#end)); });
 			
 			if (!this.isAborted) {
-				await this.listener(chunk);
+				await this.listener!(chunk);
 				
 				if (this.#end < this.size) {
 					this.#start = this.#end;

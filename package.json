@@ -3,17 +3,18 @@
   "version": "1.0.472",
   "description": "inSite file transfers over WebSockets",
   "type": "module",
-  "main": "./dist/node.js",
-  "module": "./dist/node.js",
+  "main": "./dist/node/index.js",
+  "module": "./dist/node/index.js",
   "exports": {
-    ".": "./dist/node.js",
-    "./node": "./dist/node.js",
-    "./browser": "./dist/browser.js"
+    ".": "./dist/node/index.js",
+    "./node": "./dist/node/index.js",
+    "./browser": "./dist/browser/index.js"
   },
   "packageManager": "bun@1.1.17",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "bun .conveyer.js"
+    "build": "bun .conveyer.js",
+    "postbuild": "tsc -p ."
   },
   "repository": {
     "type": "git",
@@ -30,7 +31,8 @@
   "license": "MIT",
   "dependencies": {
     "@nesvet/n": "^1.0.63",
-    "mime": "^2.6.0"
+    "mime": "^4.0.4",
+    "insite-ws": "^2.0.3"
   },
   "devDependencies": {
     "@nesvet/conveyer": "^2.2.1",

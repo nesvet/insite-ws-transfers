@@ -1,5 +1,13 @@
+import { ArrayBufferWithLength, StreamerOptions } from "../types";
+
+
+type Listener = {
+	(arrayBuffer: ArrayBufferWithLength): Promise<void> | void;
+};
+
+
 export class FileStreamer {
-	constructor(file, options = {}) {
+	constructor(file: File, options: StreamerOptions = {}) {
 		this.file = file;
 		this.size = this.file.size;
 		
@@ -11,16 +19,23 @@ export class FileStreamer {
 		
 		this.fileReader = new FileReader();
 		
+		// eslint-disable-next-line unicorn/prefer-add-event-listener
 		this.fileReader.onload = this.#handleFileReaderLoad;
 		
 	}
+	
+	file: File;
+	size: number;
+	chunkSize: number;
+	fileReader: FileReader;
+	listener?: Listener;
 	
 	#start = 0;
 	#end = 0;
 	
 	isAborted = false;
 	
-	start(listener) {
+	start(listener: Listener) {
 		this.listener = listener;
 		
 		this.#next();
@@ -32,6 +47,7 @@ export class FileStreamer {
 		if (!this.isAborted) {
 			this.#end = Math.min(this.#start + this.chunkSize, this.size);
 			
+			// eslint-disable-next-line unicorn/prefer-blob-reading-methods
 			this.fileReader.readAsArrayBuffer(this.file.slice(this.#start, this.#end));
 		}
 		
@@ -40,10 +56,10 @@ export class FileStreamer {
 	#handleFileReaderLoad = async () => {
 		
 		if (!this.isAborted) {
-			const arrayBuffer = this.fileReader.result;
+			const arrayBuffer = this.fileReader.result as ArrayBufferWithLength;
 			arrayBuffer.length = arrayBuffer.byteLength;
 			
-			await this.listener(arrayBuffer);
+			await this.listener!(arrayBuffer);
 			
 			if (this.#end < this.size) {
 				this.#start = this.#end;

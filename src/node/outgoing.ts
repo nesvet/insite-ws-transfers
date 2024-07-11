@@ -1,19 +1,24 @@
 import fs from "node:fs";
 import path from "node:path";
+import { Readable } from "node:stream";
 import mime from "mime";
 import { OutgoingTransfer } from "../OutgoingTransfer";
 import { OutgoingTransport } from "../OutgoingTransport";
+import { OutgoingTransferTypes } from "../types";
 
 
-class NodeOutgoingTransfer extends OutgoingTransfer {
+class NodeOutgoingTransfer extends OutgoingTransfer<typeof NodeOutgoingTransport, typeof NodeOutgoingTransfer> {
 	
-	static methods = [
+	stream?: Readable;
+	isBuffer?: boolean = false;
+	
+	static types: OutgoingTransferTypes<typeof NodeOutgoingTransfer> = [
 		
-		[ "stream", data => typeof data == "object" && typeof data.on == "function" && typeof data.read == "function", {
+		[ "stream", data => data instanceof Readable, {
 			
 			setup() {
 				
-				this.stream = this.data;
+				this.stream = this.data as Readable;
 				
 				if (!this.encoding)
 					this.encoding = "buffer";
@@ -25,14 +30,14 @@ class NodeOutgoingTransfer extends OutgoingTransfer {
 			
 			confirm() {
 				
-				this.stream.on("data", this.handleChunk);
+				this.stream!.on("data", this.handleChunk);
 				if (!this.size)
-					this.stream.on("end", this.sent);
+					this.stream!.on("end", this.sent);
 				
 			},
 			
 			transformChunk(chunk) {
-				return (this.isBuffer ? chunk : Buffer.from(chunk, this.encoding)).toString("base64");
+				return (this.isBuffer ? chunk : Buffer.from(chunk as string, this.encoding as Exclude<typeof this.encoding, "buffer">)).toString("base64");
 			}
 		} ],
 		
@@ -40,7 +45,7 @@ class NodeOutgoingTransfer extends OutgoingTransfer {
 			
 			async setup() {
 				
-				const fileName = this.data;
+				const fileName = this.data as string;
 				const name = path.basename(fileName);
 				const { size, mtimeMs: modifiedAt } = await fs.promises.stat(fileName);
 				
@@ -65,7 +70,7 @@ class NodeOutgoingTransfer extends OutgoingTransfer {
 			
 			confirm() {
 				
-				this.stream.on("data", this.handleChunk);
+				this.stream!.on("data", this.handleChunk);
 				
 			},
 			
@@ -74,18 +79,20 @@ class NodeOutgoingTransfer extends OutgoingTransfer {
 			}
 		} ],
 		
-		...OutgoingTransfer.methods
+		...OutgoingTransfer.types
 		
 	];
 	
 }
 
-class NodeOutgoingTransport extends OutgoingTransport {
+class NodeOutgoingTransport extends OutgoingTransport<typeof NodeOutgoingTransport, typeof NodeOutgoingTransfer> {
 	
 	static OutgoingTransfer = NodeOutgoingTransfer;
 	
 }
 
 
-export { NodeOutgoingTransfer as OutgoingTransfer,
-	NodeOutgoingTransport as OutgoingTransport };
+export {
+	NodeOutgoingTransfer as OutgoingTransfer,
+	NodeOutgoingTransport as OutgoingTransport
+};
