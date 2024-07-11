@@ -1,6 +1,6 @@
 {
   "name": "insite-ws-transfers",
-  "version": "1.0.472",
+  "version": "2.0.0",
   "description": "inSite file transfers over WebSockets",
   "type": "module",
   "main": "./dist/node/index.js",
@@ -10,7 +10,7 @@
     "./node": "./dist/node/index.js",
     "./browser": "./dist/browser/index.js"
   },
-  "packageManager": "bun@1.1.17",
+  "packageManager": "bun@1.1.18",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "bun .conveyer.js",
@@ -30,12 +30,12 @@
   "author": "Eugene Nesvetaev <dev@nesvet.dev> (https://nesvet.dev/)",
   "license": "MIT",
   "dependencies": {
-    "@nesvet/n": "^1.0.63",
+    "@nesvet/n": "^1.0.66",
     "mime": "^4.0.4",
     "insite-ws": "^2.0.3"
   },
   "devDependencies": {
     "@nesvet/conveyer": "^2.2.1",
-    "@nesvet/eslint-config": "^2.0.21"
+    "@nesvet/eslint-config": "^2.0.23"
   }
 }
