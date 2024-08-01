@@ -30,9 +30,9 @@
   "author": "Eugene Nesvetaev <dev@nesvet.dev> (https://nesvet.dev/)",
   "license": "MIT",
   "dependencies": {
-    "@nesvet/n": "^1.0.76",
+    "@nesvet/n": "^1.1.0",
     "mime": "^4.0.4",
-    "insite-ws": "^2.0.8"
+    "insite-ws": "^2.0.9"
   },
   "devDependencies": {
     "@nesvet/conveyer": "^2.2.1",
