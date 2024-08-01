@@ -9,11 +9,6 @@ import { OutgoingTransfer } from "./OutgoingTransfer";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ParametersWithoutFirst<T extends (...args: any) => any> = T extends (first: any, ...args: infer P) => any ? P : never;
 
-export type CallArgs<CA extends readonly [ InSiteWebSocket ] | readonly [ InSiteWebSocketServer, InSiteWebSocketServerClient ]> =
-	CA[0] extends InSiteWebSocketServer ?
-		[ InSiteWebSocketServer, InSiteWebSocketServerClient ] :
-		[ InSiteWebSocket ];
-
 export type ArrayBufferWithLength = {
 	length?: number;
 } & ArrayBuffer;
@@ -38,20 +33,35 @@ export type OutgoingTransferProps<FT extends typeof OutgoingTransfer> = {
 	encoding: "base64" | "buffer" | "utf8";
 	incomingEncoding?: "base64" | "buffer" | "utf8";
 	
-	onBegin(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
-	onBegin(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	onBegin?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	};
 	
-	onSenderProgress(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
-	onSenderProgress(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	onSenderProgress?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	};
 	
-	onProgress(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
-	onProgress(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	onProgress?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	};
 	
-	onEnd(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
-	onEnd(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	onEnd?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	};
 	
-	onError(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>, error: Error): Promise<unknown> | unknown;
-	onError(this: InSiteWebSocket, transfer: InstanceType<FT>, error: Error): Promise<unknown> | unknown;
+	onError?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>, error: Error): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>, error: Error): Promise<unknown> | unknown;
+	};
 };
 
 export type OutgoingTransferMethods<FT extends typeof OutgoingTransfer> = {
@@ -85,18 +95,35 @@ export type IncomingTransferMethods<FT extends typeof IncomingTransfer> = {
 export type IncomingTransferTypes<FT extends typeof IncomingTransfer> = Record<string, IncomingTransferMethods<FT>>;
 
 export type IncomingTransferListener<FT extends typeof IncomingTransfer> = {
-	begin(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
-	begin(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
 	
-	chunk(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>, chunk: IncomingChunk): Promise<unknown> | unknown;
-	chunk(this: InSiteWebSocket, transfer: InstanceType<FT>, chunk: IncomingChunk): Promise<unknown> | unknown;
+	begin?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	};
 	
-	progress(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>, chunk: IncomingChunk): Promise<unknown> | unknown;
-	progress(this: InSiteWebSocket, transfer: InstanceType<FT>, chunk: IncomingChunk): Promise<unknown> | unknown;
+	chunk?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>, chunk: IncomingChunk): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>, chunk: IncomingChunk): Promise<unknown> | unknown;
+	};
 	
-	end(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
-	end(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	progress?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>, chunk: IncomingChunk): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>, chunk: IncomingChunk): Promise<unknown> | unknown;
+	};
 	
-	error(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>, error: Error): Promise<unknown> | unknown;
-	error(this: InSiteWebSocket, transfer: InstanceType<FT>, error: Error): Promise<unknown> | unknown;
+	end?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>): Promise<unknown> | unknown;
+	};
+	
+	error?: {
+		(this: InSiteWebSocket, transfer: InstanceType<FT>, error: Error): Promise<unknown> | unknown;
+	} | {
+		(this: InSiteWebSocketServer, ws: InSiteWebSocketServerClient, transfer: InstanceType<FT>, error: Error): Promise<unknown> | unknown;
+	};
+	
 };

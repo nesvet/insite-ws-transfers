@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { InSiteWebSocket } from "insite-ws/client";
 import { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
 import { StringKey } from "@nesvet/n";
@@ -10,7 +11,6 @@ import {
 } from "./common";
 import { IncomingTransport } from "./IncomingTransport";
 import {
-	CallArgs,
 	IncomingChunk,
 	IncomingData,
 	IncomingTransferMethods,
@@ -30,7 +30,7 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		
 		this.transport = transport;
 		this.ws = ws;
-		this[callArgsSymbol] = ws.isWebSocketServerClient ? [ ws.wss!, ws ] as const : [ ws ] as const;
+		this[callArgsSymbol] = ws.isWebSocketServerClient ? [ ws.wss, ws ] as const : [ ws ] as const;
 		this.kind = kind;
 		this.id = id;
 		this.type = type;
@@ -104,7 +104,7 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		
 		const callArgs = this[callArgsSymbol];
 		for (const { begin } of this.listeners)
-			if (await begin?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>) === false)
+			if (await (begin as any)?.call(...callArgs, this as InstanceType<FT>) === false)
 				return this.throw("Transfer was rejected by receiver");
 		
 		this.beginAt =
@@ -153,7 +153,7 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		
 		const callArgs = this[callArgsSymbol];
 		for (const { chunk: chunkListener, progress: progressListener } of this.listeners)
-			await (chunkListener ?? progressListener)?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>, chunk);
+			await ((chunkListener ?? progressListener) as any)?.call(...callArgs, this as InstanceType<FT>, chunk);
 		
 		this.processedSize += length;
 		if (this.size)
@@ -194,7 +194,7 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		
 		const callArgs = this[callArgsSymbol];
 		for (const { end } of this.listeners)
-			await end?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>);
+			await (end as any)?.call(...callArgs, this as InstanceType<FT>);
 		
 		clearInterval(this.#progressInterval);
 		
@@ -223,7 +223,7 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		
 		const callArgs = this[callArgsSymbol];
 		for (const { error } of this.listeners)
-			error?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>, this.error);
+			(error as any)?.call(...callArgs, this as InstanceType<FT>, this.error);
 		
 		if (sendToSender)
 			this.ws.sendMessage(headers.error, this.id, errorMessage);

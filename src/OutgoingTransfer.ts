@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { InSiteWebSocket } from "insite-ws/client";
 import { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
 import { uid } from "@nesvet/n";
@@ -11,7 +12,6 @@ import {
 import { OutgoingTransport } from "./OutgoingTransport";
 import { StringStreamer } from "./StringStreamer";
 import {
-	CallArgs,
 	OutgoingChunk,
 	OutgoingTransferMethods,
 	OutgoingTransferProps,
@@ -47,7 +47,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		
 		this.transport = transport;
 		this.ws = ws;
-		this[callArgsSymbol] = ws.isWebSocketServerClient ? [ ws.wss!, ws ] as const : [ ws ] as const;
+		this[callArgsSymbol] = ws.isWebSocketServerClient ? [ ws.wss, ws ] as const : [ ws ] as const;
 		this.kind = kind;
 		this.data = data;
 		this.type = type;
@@ -148,7 +148,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 				Date.now();
 		
 		const callArgs = this[callArgsSymbol];
-		await this.onBegin?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>);
+		await (this.onBegin as any)?.call(...callArgs, this as InstanceType<FT>);
 		
 		this.#methods!.confirm.call(this as InstanceType<FT>);
 		
@@ -184,7 +184,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 			this.senderProgress = this.transferedSize / this.size;
 		
 		const callArgs = this[callArgsSymbol];
-		await this.onSenderProgress?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>);
+		await (this.onSenderProgress as any)?.call(...callArgs, this as InstanceType<FT>);
 		
 		if (this.#chunksQueue.length)
 			this.#process();
@@ -203,7 +203,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		this.progress = progress;
 		
 		const callArgs = this[callArgsSymbol];
-		this.onProgress?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>);
+		(this.onProgress as any)?.call(...callArgs, this as InstanceType<FT>);
 		
 	}
 	
@@ -226,10 +226,10 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		
 		if (this.progress !== 1) {
 			this.progress = 1;
-			await this.onProgress?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>);
+			await (this.onProgress as any)?.call(...callArgs, this as InstanceType<FT>);
 		}
 		
-		this.onEnd?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>);
+		(this.onEnd as any)?.call(...callArgs, this as InstanceType<FT>);
 		
 	}
 	
@@ -240,7 +240,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		this.error = new Error(errorMessage);
 		
 		const callArgs = this[callArgsSymbol];
-		this.onError?.call(...callArgs as CallArgs<typeof callArgs>, this as InstanceType<FT>, this.error);
+		(this.onError as any)?.call(...callArgs, this as InstanceType<FT>, this.error);
 		
 	}
 	
