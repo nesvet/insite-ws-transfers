@@ -1,6 +1,6 @@
-import { InSiteWebSocket } from "insite-ws/client";
-import { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
-import { StringKey } from "@nesvet/n";
+import type { InSiteWebSocket } from "insite-ws/client";
+import type { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
+import type { StringKey } from "@nesvet/n";
 import {
 	sizeLimit as defaultSizeLimit,
 	headers,
@@ -8,7 +8,7 @@ import {
 	transfersSymbol
 } from "./common";
 import { IncomingTransfer } from "./IncomingTransfer";
-import {
+import type {
 	IncomingChunk,
 	IncomingTransferListener,
 	IncomingTransferProps,
