@@ -73,6 +73,10 @@ export type OutgoingTransferMethods<FT extends typeof OutgoingTransfer> = {
 export type OutgoingTransferTypes<FT extends typeof OutgoingTransfer> = [ type: string, test: (data: OutgoingData) => boolean, OutgoingTransferMethods<FT> ][];
 
 
+export type IncomingTransportOptions = {
+	sizeLimit?: number;
+};
+
 export type IncomingData = Buffer | string;
 
 export type IncomingChunk = Buffer | string;

@@ -2,6 +2,7 @@ import { Readable, type Writable } from "node:stream";
 import { IncomingTransfer } from "../IncomingTransfer";
 import { IncomingTransport } from "../IncomingTransport";
 import { IncomingTransferMethods, IncomingTransferTypes } from "../types";
+export { IncomingTransportOptions } from "../types";
 
 
 class TransferStream extends Readable {

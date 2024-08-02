@@ -12,17 +12,13 @@ import {
 	IncomingChunk,
 	IncomingTransferListener,
 	IncomingTransferProps,
+	IncomingTransportOptions,
 	ParametersWithoutFirst
 } from "./types";
 
 
-type Options = {
-	sizeLimit?: number;
-};
-
-
 export class IncomingTransport<PT extends typeof IncomingTransport, FT extends typeof IncomingTransfer> {
-	constructor(ws: InSiteWebSocket | InSiteWebSocketServer, options: Options = {}) {
+	constructor(ws: InSiteWebSocket | InSiteWebSocketServer, options: IncomingTransportOptions = {}) {
 		
 		const {
 			sizeLimit = defaultSizeLimit

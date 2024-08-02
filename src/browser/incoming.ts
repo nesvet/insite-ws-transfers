@@ -1,6 +1,7 @@
 import { IncomingTransfer } from "../IncomingTransfer";
 import { IncomingTransport } from "../IncomingTransport";
 import { IncomingTransferTypes } from "../types";
+export { IncomingTransportOptions } from "../types";
 
 
 class BrowserIncomingTransfer extends IncomingTransfer<typeof BrowserIncomingTransport, typeof BrowserIncomingTransfer> {
