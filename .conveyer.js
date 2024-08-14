@@ -7,7 +7,6 @@ const { NODE_ENV } = process.env;
 const distDir = "dist";
 
 const common = {
-	external: true,
 	format: "esm",
 	sourcemap: true
 };
@@ -19,6 +18,7 @@ new Conveyer([
 		title: "Node",
 		entryPoints: [ "src/node/index.ts" ],
 		outfile: path.resolve(distDir, "node", "index.js"),
+		external: [ true, "insite-*" ],
 		platform: "node",
 		target: "node20",
 		...common
@@ -28,6 +28,7 @@ new Conveyer([
 		title: "Browser",
 		entryPoints: [ "src/browser/index.ts" ],
 		outfile: path.resolve(distDir, "browser", "index.js"),
+		external: true,
 		platform: "browser",
 		target: "es2020",
 		define: {
