@@ -31,8 +31,8 @@
   "license": "MIT",
   "dependencies": {
     "@nesvet/n": "^1.1.7",
-    "mime": "^4.0.4",
-    "insite-ws": "^2"
+    "insite-ws": "^2.0.17",
+    "mime": "^4.0.4"
   },
   "devDependencies": {
     "@nesvet/conveyer": "^2.2.4",
