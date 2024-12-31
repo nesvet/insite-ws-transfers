@@ -1,4 +1,4 @@
-import { StreamerOptions } from "./types";
+import type { StreamerOptions } from "./types";
 
 
 type Listener = {

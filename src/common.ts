@@ -9,13 +9,8 @@ export const headers = {
 	error: "~t-error"
 };
 
-export const transfersSymbol = Symbol("transfers");
-export const listenersSymbol = Symbol("listeners");
-
 export const sizeLimit = 10 * 1024 * 1024 * 1024;
 
 export const chunkSize = 1024 * 256;
-
-export const callArgsSymbol = Symbol("callArgs");
 
 export const progressInterval = 250;

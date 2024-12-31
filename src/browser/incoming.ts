@@ -1,12 +1,17 @@
+import type { InSiteWebSocket } from "insite-ws/client";
+import type { InSiteWebSocketServerClient } from "insite-ws/server";
 import { IncomingTransfer } from "../IncomingTransfer";
 import { IncomingTransport } from "../IncomingTransport";
-import { IncomingTransferTypes } from "../types";
-export { IncomingTransportOptions } from "../types";
+import type { IncomingTransferTypes } from "../types";
+import type { BrowserTransferTypes } from "./types";
+export type { IncomingTransportOptions } from "../types";
 
 
-class BrowserIncomingTransfer extends IncomingTransfer<typeof BrowserIncomingTransport, typeof BrowserIncomingTransfer> {
+class BrowserIncomingTransfer<
+	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient = InSiteWebSocket
+> extends IncomingTransfer<WSORWSSC> {
 	
-	static types: IncomingTransferTypes<typeof BrowserIncomingTransfer> = {
+	static types: IncomingTransferTypes<BrowserIncomingTransfer<InSiteWebSocket>, BrowserTransferTypes> = {
 		
 		file: {
 			setup() {
@@ -35,7 +40,9 @@ class BrowserIncomingTransfer extends IncomingTransfer<typeof BrowserIncomingTra
 	
 }
 
-class BrowserIncomingTransport extends IncomingTransport<typeof BrowserIncomingTransport, typeof BrowserIncomingTransfer> {
+class BrowserIncomingTransport<
+	WSORWSSC extends InSiteWebSocket = InSiteWebSocket
+> extends IncomingTransport<WSORWSSC, BrowserIncomingTransfer<WSORWSSC>, BrowserTransferTypes> {
 	
 	static Transfer = BrowserIncomingTransfer;
 	

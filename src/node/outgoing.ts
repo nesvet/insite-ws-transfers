@@ -2,17 +2,22 @@ import fs from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import mime from "mime";
+import type { InSiteWebSocket } from "insite-ws/client";
+import type { InSiteWebSocketServerClient } from "insite-ws/server";
 import { OutgoingTransfer } from "../OutgoingTransfer";
 import { OutgoingTransport } from "../OutgoingTransport";
-import { OutgoingTransferTypes } from "../types";
+import type { OutgoingTransferTypes } from "../types";
+import type { NodeTransferTypes } from "./types";
 
 
-class NodeOutgoingTransfer extends OutgoingTransfer<typeof NodeOutgoingTransport, typeof NodeOutgoingTransfer> {
+class NodeOutgoingTransfer<
+	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient
+> extends OutgoingTransfer<WSORWSSC> {
 	
-	stream?: Readable;
-	isBuffer?: boolean = false;
+	stream?: Readable = this.stream;
+	isBuffer?: boolean = this.isBuffer || false;
 	
-	static types: OutgoingTransferTypes<typeof NodeOutgoingTransfer> = [
+	static types: OutgoingTransferTypes<NodeOutgoingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>, NodeTransferTypes> = [
 		
 		[ "stream", data => data instanceof Readable, {
 			
@@ -85,7 +90,9 @@ class NodeOutgoingTransfer extends OutgoingTransfer<typeof NodeOutgoingTransport
 	
 }
 
-class NodeOutgoingTransport extends OutgoingTransport<typeof NodeOutgoingTransport, typeof NodeOutgoingTransfer> {
+class NodeOutgoingTransport<
+	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient
+> extends OutgoingTransport<WSORWSSC, NodeOutgoingTransfer<WSORWSSC>, NodeTransferTypes> {
 	
 	static OutgoingTransfer = NodeOutgoingTransfer;
 	

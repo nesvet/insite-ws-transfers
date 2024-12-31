@@ -1,4 +1,4 @@
-import { ArrayBufferWithLength, StreamerOptions } from "../types";
+import type { ArrayBufferWithLength, StreamerOptions } from "../types";
 
 
 type Listener = {

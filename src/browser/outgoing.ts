@@ -1,13 +1,18 @@
+import type { InSiteWebSocket } from "insite-ws/client";
+import type { InSiteWebSocketServerClient } from "insite-ws/server";
 import { OutgoingTransfer } from "../OutgoingTransfer";
 import { OutgoingTransport } from "../OutgoingTransport";
-import { OutgoingTransferTypes } from "../types";
+import type { OutgoingTransferTypes } from "../types";
 import { arrayBufferToBase64 } from "./arrayBufferToBase64";
 import { FileStreamer } from "./FileStreamer";
+import type { BrowserTransferTypes } from "./types";
 
 
-class BrowserOutgoingTransfer extends OutgoingTransfer<typeof BrowserOutgoingTransport, typeof BrowserOutgoingTransfer> {
+class BrowserOutgoingTransfer<
+	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient = InSiteWebSocket
+> extends OutgoingTransfer<WSORWSSC> {
 	
-	static types: OutgoingTransferTypes<typeof BrowserOutgoingTransfer> = [
+	static types: OutgoingTransferTypes<BrowserOutgoingTransfer<InSiteWebSocket>, BrowserTransferTypes> = [
 		
 		[ "file", data => typeof data == "object" && data instanceof File, {
 			
@@ -41,17 +46,19 @@ class BrowserOutgoingTransfer extends OutgoingTransfer<typeof BrowserOutgoingTra
 			},
 			
 			transformChunk(chunk) {
-				return arrayBufferToBase64(chunk as Buffer);
+				return arrayBufferToBase64(chunk as ArrayBuffer);
 			}
 		} ],
 		
-		...OutgoingTransfer.types
+		...OutgoingTransfer.types as OutgoingTransferTypes<OutgoingTransfer<InSiteWebSocket>, BrowserTransferTypes>
 		
 	];
 	
 }
 
-class BrowserOutgoingTransport extends OutgoingTransport<typeof BrowserOutgoingTransport, typeof BrowserOutgoingTransfer> {
+class BrowserOutgoingTransport<
+	WSORWSSC extends InSiteWebSocket = InSiteWebSocket
+> extends OutgoingTransport<WSORWSSC, BrowserOutgoingTransfer<WSORWSSC>, BrowserTransferTypes> {
 	
 	static Transfer = BrowserOutgoingTransfer;
 	

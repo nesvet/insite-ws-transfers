@@ -1,24 +1,24 @@
 import type { InSiteWebSocket } from "insite-ws/client";
 import type { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
-import type { StringKey } from "@nesvet/n";
-import {
-	sizeLimit as defaultSizeLimit,
-	headers,
-	listenersSymbol,
-	transfersSymbol
-} from "./common";
+import { sizeLimit as defaultSizeLimit, headers } from "./common";
 import { IncomingTransfer } from "./IncomingTransfer";
 import type {
 	IncomingChunk,
 	IncomingTransferListener,
 	IncomingTransferProps,
 	IncomingTransportOptions,
-	ParametersWithoutFirst
+	ParametersWithoutFirst,
+	TransferHandles,
+	TransferTypes
 } from "./types";
 
 
-export class IncomingTransport<PT extends typeof IncomingTransport, FT extends typeof IncomingTransfer> {
-	constructor(ws: InSiteWebSocket | InSiteWebSocketServer, options: IncomingTransportOptions = {}) {
+export class IncomingTransport<
+	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient,
+	T extends IncomingTransfer<WSORWSSC>,
+	Types extends TransferTypes = TransferTypes
+> {
+	constructor(ws: InSiteWebSocket | InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, options: IncomingTransportOptions = {}) {
 		
 		const {
 			sizeLimit = defaultSizeLimit
@@ -27,10 +27,10 @@ export class IncomingTransport<PT extends typeof IncomingTransport, FT extends t
 		this.sizeLimit = sizeLimit;
 		
 		if (ws.isWebSocketServer) {
-			ws.on(`client-message:${headers.request}`, (wssc: InSiteWebSocketServerClient, ...args: ParametersWithoutFirst<typeof this.handleRequest>) => this.handleRequest(wssc, ...args));
-			ws.on(`client-message:${headers.chunk}`, (wssc: InSiteWebSocketServerClient, ...args: ParametersWithoutFirst<typeof this.handleChunk>) => this.handleChunk(wssc, ...args));
-			ws.on(`client-message:${headers.sent}`, (wssc: InSiteWebSocketServerClient, ...args: ParametersWithoutFirst<typeof this.handleSent>) => this.handleSent(wssc, ...args));
-			ws.on(`client-message:${headers.abort}`, (wssc: InSiteWebSocketServerClient, ...args: ParametersWithoutFirst<typeof this.handleAbort>) => this.handleAbort(wssc, ...args));
+			ws.on(`client-message:${headers.request}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleRequest>) => this.handleRequest(wssc, ...args));
+			ws.on(`client-message:${headers.chunk}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleChunk>) => this.handleChunk(wssc, ...args));
+			ws.on(`client-message:${headers.sent}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleSent>) => this.handleSent(wssc, ...args));
+			ws.on(`client-message:${headers.abort}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleAbort>) => this.handleAbort(wssc, ...args));
 		} else {
 			ws.on(`message:${headers.request}`, (...args: ParametersWithoutFirst<typeof this.handleRequest>) => this.handleRequest(ws, ...args));
 			ws.on(`message:${headers.chunk}`, (...args: ParametersWithoutFirst<typeof this.handleChunk>) => this.handleChunk(ws, ...args));
@@ -42,64 +42,82 @@ export class IncomingTransport<PT extends typeof IncomingTransport, FT extends t
 	
 	sizeLimit;
 	
-	[listenersSymbol] = new Map<string, Set<IncomingTransferListener<FT>>>();
+	#listeners = new Map<string, Set<IncomingTransferListener<WSORWSSC, T>>>();
 	
-	addTransferListener(kind: string, listener: IncomingTransferListener<FT>) {
-		this[listenersSymbol].get(kind)?.add(listener) ??
-		this[listenersSymbol].set(kind, new Set([ listener ]));
+	addTransferListener(kind: string, listener: IncomingTransferListener<WSORWSSC, T>) {
+		this.#listeners.get(kind)?.add(listener) ??
+		this.#listeners.set(kind, new Set([ listener ]));
 		
 		return this;
 	}
 	
 	on = this.addTransferListener;
 	
-	removeTransferListener(kind: string, listener?: IncomingTransferListener<FT>) {
+	removeTransferListener(kind: string, listener?: IncomingTransferListener<WSORWSSC, T>) {
 		if (listener)
-			this[listenersSymbol].get(kind)?.delete(listener);
+			this.#listeners.get(kind)?.delete(listener);
 		else
-			this[listenersSymbol].delete(kind);
+			this.#listeners.delete(kind);
 		
 		return this;
 	}
 	
 	off = this.removeTransferListener;
 	
-	[transfersSymbol] = new Map<string, InstanceType<FT>>();
+	#transfers = new Map<string, T>();
+	
+	#transferHandles: TransferHandles = {
+		
+		delete: (id: string) => this.#transfers.delete(id)
+		
+	};
 	
 	private handleRequest(
-		ws: InSiteWebSocket | InSiteWebSocketServerClient,
+		ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket,
 		kind: string,
 		id: string,
-		{ type, size, metadata, ...restProps }: IncomingTransferProps<StringKey<FT["types"]>>
+		{ type, size, metadata, ...restProps }: IncomingTransferProps<Types>
 	) {
 		
-		const { Transfer } = this.constructor as PT;
+		const { Transfer } = this.constructor as typeof IncomingTransport;
 		
-		if (!this[listenersSymbol].has(kind))
+		if (!this.#listeners.has(kind))
 			ws.sendMessage(headers.error, id, `Unknown kind of file "${kind}"`);
-		else if (this[transfersSymbol].has(id))
+		else if (this.#transfers.has(id))
 			ws.sendMessage(headers.error, id, "Transfer already exists");
 		else if (!(type in Transfer.types))
 			ws.sendMessage(headers.error, id, "Unknown type of transfer");
 		else if (size > this.sizeLimit)
 			ws.sendMessage(headers.error, id, `Transfer size (${size} bytes) exeeds limit of ${this.sizeLimit} bytes`);
 		else
-			new Transfer(this as InstanceType<PT>, ws, kind, id, { type, size, metadata, ...restProps });
+			this.#transfers.set(id, new Transfer(
+				ws,
+				kind,
+				id,
+				{
+					type: type as Exclude<TransferTypes, string>,
+					size,
+					metadata,
+					...restProps
+				},
+				this.#transferHandles,
+				this.#listeners.get(kind)!
+			) as T);
 		
 	}
 	
-	private handleChunk(ws: InSiteWebSocket | InSiteWebSocketServerClient, id: string, chunk: IncomingChunk, length = chunk.length) {
-		this[transfersSymbol].get(id)?.handleChunk(chunk, length);
+	private handleChunk(ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket, id: string, chunk: IncomingChunk, length = chunk.length) {
+		this.#transfers.get(id)?.handleChunk(chunk, length);
 		
 	}
 	
-	private handleSent(ws: InSiteWebSocket | InSiteWebSocketServerClient, id: string) {
-		this[transfersSymbol].get(id)?.handleSent();
+	private handleSent(ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket, id: string) {
+		this.#transfers.get(id)?.handleSent();
 		
 	}
 	
-	private handleAbort(ws: InSiteWebSocket | InSiteWebSocketServerClient, id: string) {
-		this[transfersSymbol].get(id)?.abort(true);
+	private handleAbort(ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket, id: string) {
+		this.#transfers.get(id)?.abort(true);
 		
 	}
 	

@@ -1,36 +1,39 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { InSiteWebSocket } from "insite-ws/client";
-import { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
-import { StringKey } from "@nesvet/n";
-import {
-	callArgsSymbol,
-	headers,
-	listenersSymbol,
-	progressInterval,
-	transfersSymbol
-} from "./common";
-import { IncomingTransport } from "./IncomingTransport";
-import {
+import type { InSiteWebSocket } from "insite-ws/client";
+import type { InSiteWebSocketServerClient } from "insite-ws/server";
+import { headers, progressInterval } from "./common";
+import type {
 	IncomingChunk,
 	IncomingData,
+	IncomingTransferListener,
 	IncomingTransferMethods,
 	IncomingTransferProps,
-	IncomingTransferTypes
+	IncomingTransferTypes,
+	TransferHandles,
+	TransferTypes
 } from "./types";
 
 
-export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends typeof IncomingTransfer> {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
+export class IncomingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient> {
 	constructor(
-		transport: IncomingTransport<PT, FT>,
-		ws: InSiteWebSocket | InSiteWebSocketServerClient,
+		ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket,
 		kind: string,
 		id: string,
-		{ type, collect, encoding, size, metadata }: IncomingTransferProps<StringKey<FT["types"]>>
+		{
+			type,
+			collect,
+			encoding,
+			size,
+			metadata
+		}: IncomingTransferProps<TransferTypes>,
+		handles: TransferHandles,
+		listeners: Set<IncomingTransferListener<WSORWSSC, any>>
 	) {
 		
-		this.transport = transport;
 		this.ws = ws;
-		this[callArgsSymbol] = ws.isWebSocketServerClient ? [ ws.wss, ws ] as const : [ ws ] as const;
+		this.#callArgs = ws.isWebSocket ? [ ws ] as const : [ ws.wss, ws ] as const;
 		this.kind = kind;
 		this.id = id;
 		this.type = type;
@@ -39,29 +42,30 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		this.size = size;
 		this.metadata = metadata;
 		
-		this.listeners = this.transport[listenersSymbol].get(this.kind)!;
-		
-		this.transport[transfersSymbol].set(this.id, this as InstanceType<FT>);
+		this.#handles = handles;
+		this.#listeners = listeners;
 		
 		this.#setupPromise = this.#setup();
 		
 	}
 	
-	transport;
 	ws;
-	[callArgsSymbol]: readonly [InSiteWebSocket] | readonly [InSiteWebSocketServer, InSiteWebSocketServerClient];
+	#callArgs;
 	kind;
 	id;
-	type: string;
+	type;
 	collect;
 	encoding;
 	size;
 	metadata;
-	listeners;
+	
+	#handles;
+	#listeners;
+	
 	#setupPromise;
 	
 	data?: IncomingData;
-	#methods?: IncomingTransferMethods<FT>;
+	#methods?: IncomingTransferMethods<IncomingTransfer<WSORWSSC>>;
 	isAborted = false;
 	isAbortedBySender = false;
 	isAbortedByReceiver = false;
@@ -79,16 +83,17 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 	endAt: null | number = null;
 	error: Error | null = null;
 	
+	[key: number | string | symbol]: unknown;
 	
 	#progressInterval?: NodeJS.Timeout;
 	#lastProgress = 0;
 	
 	async #setup() {
 		
-		this.#methods = ((this.constructor as FT).types as IncomingTransferTypes<FT>)[this.type];
+		this.#methods = (this.constructor as typeof IncomingTransfer<WSORWSSC>).types[this.type];
 		
 		if (this.#methods)
-			await this.#methods.setup.call(this as InstanceType<FT>);
+			await this.#methods.setup.call(this);
 		else
 			throw new Error(`Unknown type of transfer "${String(this.type)}"`);
 		
@@ -102,9 +107,8 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 	
 	async confirm() {
 		
-		const callArgs = this[callArgsSymbol];
-		for (const { begin } of this.listeners)
-			if (await (begin as any)?.call(...callArgs, this as InstanceType<FT>) === false)
+		for (const { begin } of this.#listeners)
+			if (await (begin as any)?.call(...this.#callArgs, this) === false)
 				return this.throw("Transfer was rejected by receiver");
 		
 		this.beginAt =
@@ -146,14 +150,13 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		let [ chunk, length ] = this.#chunksQueue.shift()!;// eslint-disable-line prefer-const
 		
 		if (this.#methods!.transformChunk)
-			chunk = await this.#methods!.transformChunk.call(this as InstanceType<FT>, chunk);
+			chunk = await this.#methods!.transformChunk.call(this, chunk);
 		
 		if (this.collect)
-			await this.#methods!.collect.call(this as InstanceType<FT>, chunk);
+			await this.#methods!.collect.call(this, chunk);
 		
-		const callArgs = this[callArgsSymbol];
-		for (const { chunk: chunkListener, progress: progressListener } of this.listeners)
-			await ((chunkListener ?? progressListener) as any)?.call(...callArgs, this as InstanceType<FT>, chunk);
+		for (const { chunk: chunkListener, progress: progressListener } of this.#listeners)
+			await ((chunkListener ?? progressListener) as any)?.call(...this.#callArgs, this, chunk);
 		
 		this.processedSize += length;
 		if (this.size)
@@ -190,15 +193,14 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 		
 		this.progress = 1;
 		
-		await this.#methods!.done?.call(this as InstanceType<FT>);
+		await this.#methods!.done?.call(this);
 		
-		const callArgs = this[callArgsSymbol];
-		for (const { end } of this.listeners)
-			await (end as any)?.call(...callArgs, this as InstanceType<FT>);
+		for (const { end } of this.#listeners)
+			await (end as any)?.call(...this.#callArgs, this);
 		
 		clearInterval(this.#progressInterval);
 		
-		this.transport[transfersSymbol].delete(this.id);
+		this.#handles.delete(this.id);
 		
 		this.ws.sendMessage(headers.completed, this.id);
 		
@@ -215,15 +217,14 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 	
 	throw(errorMessage: string, sendToSender = true) {
 		
-		this.transport[transfersSymbol].delete(this.id);
+		this.#handles.delete(this.id);
 		
 		clearInterval(this.#progressInterval);
 		
 		this.error = new Error(errorMessage);
 		
-		const callArgs = this[callArgsSymbol];
-		for (const { error } of this.listeners)
-			(error as any)?.call(...callArgs, this as InstanceType<FT>, this.error);
+		for (const { error } of this.#listeners)
+			(error as any)?.call(...this.#callArgs, this, this.error);
 		
 		if (sendToSender)
 			this.ws.sendMessage(headers.error, this.id, errorMessage);
@@ -256,7 +257,7 @@ export class IncomingTransfer<PT extends typeof IncomingTransport, FT extends ty
 	}
 	
 	
-	static readonly types: IncomingTransferTypes<typeof IncomingTransfer> = {
+	static types: IncomingTransferTypes<IncomingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>, TransferTypes> = {
 		
 		object: {
 			setup() {

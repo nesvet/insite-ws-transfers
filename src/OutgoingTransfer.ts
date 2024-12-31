@@ -1,31 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { InSiteWebSocket } from "insite-ws/client";
-import { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
+import type { InSiteWebSocket } from "insite-ws/client";
+import type { InSiteWebSocketServerClient } from "insite-ws/server";
 import { uid } from "@nesvet/n";
-import { FileStreamer } from "./browser/FileStreamer";
-import {
-	callArgsSymbol,
-	chunkSize as defaultChunkSize,
-	headers,
-	transfersSymbol
-} from "./common";
-import { OutgoingTransport } from "./OutgoingTransport";
+import { chunkSize as defaultChunkSize, headers } from "./common";
 import { StringStreamer } from "./StringStreamer";
-import {
+import type { FileStreamer } from "./browser/FileStreamer";
+import type {
 	OutgoingChunk,
 	OutgoingTransferMethods,
 	OutgoingTransferProps,
-	OutgoingTransferTypes
+	OutgoingTransferTypes,
+	TransferHandles,
+	TransferTypes
 } from "./types";
+
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 // FIXME
 
 
-export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends typeof OutgoingTransfer> {
+export class OutgoingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient> {
 	constructor(
-		transport: OutgoingTransport<PT, FT>,
-		ws: InSiteWebSocket | InSiteWebSocketServerClient,
+		ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket,
 		kind: string,
 		{
 			data,
@@ -42,12 +39,12 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 			onProgress,
 			onEnd,
 			onError
-		}: OutgoingTransferProps<FT>
+		}: OutgoingTransferProps<WSORWSSC, any, any>,
+		handles: TransferHandles
 	) {
 		
-		this.transport = transport;
 		this.ws = ws;
-		this[callArgsSymbol] = ws.isWebSocketServerClient ? [ ws.wss, ws ] as const : [ ws ] as const;
+		this.#callArgs = ws.isWebSocket ? [ ws ] as const : [ ws.wss, ws ] as const;
 		this.kind = kind;
 		this.data = data;
 		this.type = type;
@@ -57,43 +54,46 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		this.encoding = encoding;
 		this.chunkSize = chunkSize ?? (this.constructor as typeof OutgoingTransfer).chunkSize;
 		
-		if (onBegin)
-			this.onBegin = onBegin;
-		if (onSenderProgress)
-			this.onSenderProgress = onSenderProgress;
-		if (onProgress)
-			this.onProgress = onProgress;
-		if (onEnd)
-			this.onEnd = onEnd;
-		if (onError)
-			this.onError = onError;
+		this.#handles = handles;
 		
-		this.transport[transfersSymbol].set(this.id, this as InstanceType<FT>);
+		if (onBegin)
+			this.#onBegin = onBegin;
+		if (onSenderProgress)
+			this.#onSenderProgress = onSenderProgress;
+		if (onProgress)
+			this.#onProgress = onProgress;
+		if (onEnd)
+			this.#onEnd = onEnd;
+		if (onError)
+			this.#onError = onError;
 		
 		this.#setupPromise = this.#setup(incomingType, incomingEncoding);
 		
 	}
 	
-	transport;
 	ws;
-	[callArgsSymbol]: readonly [InSiteWebSocket] | readonly [InSiteWebSocketServer, InSiteWebSocketServerClient];
+	#callArgs;
 	kind;
 	data?;
-	type: string;
+	type?: string;
 	collect;
 	metadata;
 	size;
 	encoding;
 	chunkSize;
-	onBegin?;
-	onSenderProgress?;
-	onProgress?;
-	onEnd?;
-	onError?;
+	
+	#handles;
+	
+	#onBegin?;
+	#onSenderProgress?;
+	#onProgress?;
+	#onEnd?;
+	#onError?;
+	
 	#setupPromise;
 	
 	id = uid();
-	#methods?: OutgoingTransferMethods<FT>;
+	#methods?: OutgoingTransferMethods<OutgoingTransfer<WSORWSSC>>;
 	isAborted = false;
 	isTransfered = false;
 	confirmResponse?: string;
@@ -111,6 +111,8 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 	stringStreamer?: StringStreamer;
 	fileStreamer?: FileStreamer;
 	
+	[key: number | string | symbol]: unknown;
+	
 	async #setup(incomingType?: string, incomingEncoding?: string) {
 		
 		for (const [ availableType, test, methods ] of (this.constructor as typeof OutgoingTransfer).types)
@@ -121,7 +123,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 			}
 		
 		if (this.type) {
-			await this.#methods!.setup.call(this as InstanceType<FT>);
+			await this.#methods!.setup.call(this);
 			delete this.data;
 		} else
 			throw new Error("Unknown type of transfer");
@@ -147,10 +149,9 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 			this.#prevChunkAt =
 				Date.now();
 		
-		const callArgs = this[callArgsSymbol];
-		await (this.onBegin as any)?.call(...callArgs, this as InstanceType<FT>);
+		await (this.#onBegin as any)?.call(...this.#callArgs, this);
 		
-		this.#methods!.confirm.call(this as InstanceType<FT>);
+		this.#methods!.confirm.call(this);
 		
 	}
 	
@@ -171,7 +172,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		const chunkLength = chunk.length!;
 		
 		if (this.#methods!.transformChunk)
-			chunk = await this.#methods!.transformChunk.call(this as InstanceType<FT>, chunk);
+			chunk = await this.#methods!.transformChunk.call(this, chunk);
 		
 		this.ws.sendMessage(headers.chunk, this.id, chunk, chunkLength);
 		
@@ -183,8 +184,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		if (this.size)
 			this.senderProgress = this.transferedSize / this.size;
 		
-		const callArgs = this[callArgsSymbol];
-		await (this.onSenderProgress as any)?.call(...callArgs, this as InstanceType<FT>);
+		await (this.#onSenderProgress as any)?.call(...this.#callArgs, this);
 		
 		if (this.#chunksQueue.length)
 			this.#process();
@@ -202,8 +202,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 	handleProgress(progress: number) {
 		this.progress = progress;
 		
-		const callArgs = this[callArgsSymbol];
-		(this.onProgress as any)?.call(...callArgs, this as InstanceType<FT>);
+		(this.#onProgress as any)?.call(...this.#callArgs, this);
 		
 	}
 	
@@ -220,27 +219,24 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 		this.duration = this.endAt - this.beginAt!;
 		this.bytesPerMs = this.size / this.duration;
 		
-		this.transport[transfersSymbol].delete(this.id);
-		
-		const callArgs = this[callArgsSymbol];
+		this.#handles.delete(this.id);
 		
 		if (this.progress !== 1) {
 			this.progress = 1;
-			await (this.onProgress as any)?.call(...callArgs, this as InstanceType<FT>);
+			await (this.#onProgress as any)?.call(...this.#callArgs, this);
 		}
 		
-		(this.onEnd as any)?.call(...callArgs, this as InstanceType<FT>);
+		(this.#onEnd as any)?.call(...this.#callArgs, this);
 		
 	}
 	
 	throw(errorMessage: string) {
 		
-		this.transport[transfersSymbol].delete(this.id);
+		this.#handles.delete(this.id);
 		
 		this.error = new Error(errorMessage);
 		
-		const callArgs = this[callArgsSymbol];
-		(this.onError as any)?.call(...callArgs, this as InstanceType<FT>, this.error);
+		(this.#onError as any)?.call(...this.#callArgs, this, this.error);
 		
 	}
 	
@@ -277,7 +273,7 @@ export class OutgoingTransfer<PT extends typeof OutgoingTransport, FT extends ty
 	}
 	
 	
-	static readonly types: OutgoingTransferTypes<typeof OutgoingTransfer> = [
+	static types: OutgoingTransferTypes<OutgoingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>, TransferTypes> = [
 		
 		[ "object", data => typeof data == "object", {
 			
