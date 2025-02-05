@@ -94,7 +94,7 @@ class NodeOutgoingTransport<
 	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient
 > extends OutgoingTransport<WSORWSSC, NodeOutgoingTransfer<WSORWSSC>, NodeTransferTypes> {
 	
-	static OutgoingTransfer = NodeOutgoingTransfer;
+	static Transfer = NodeOutgoingTransfer;
 	
 }
 
