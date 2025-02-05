@@ -53,6 +53,10 @@ export class IncomingTransport<
 	
 	on = this.addTransferListener;
 	
+	once(kind: string, listener: IncomingTransferListener<WSORWSSC, T>, options?: Omit<IncomingTransferListenerOptions, "once">) {
+		return this.addTransferListener(kind, listener, { ...options, once: true });
+	}
+	
 	removeTransferListener(kind: string, listener?: IncomingTransferListener<WSORWSSC, T>) {
 		if (listener)
 			this.#listeners.get(kind)?.delete(listener);
@@ -68,7 +72,7 @@ export class IncomingTransport<
 	
 	#transferHandles: TransferHandles = {
 		
-		delete: (id: string) => this.#transfers.delete(id)
+		removeListener: (kind: string, listener: IncomingTransferListener<WSORWSSC, T>) => this.removeTransferListener(kind, listener)
 		
 	};
 	

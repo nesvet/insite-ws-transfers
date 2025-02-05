@@ -195,8 +195,8 @@ export class IncomingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocket
 		
 		await this.#methods!.done?.call(this);
 		
-		for (const { end } of this.#listeners)
-			await (end as any)?.call(...this.#callArgs, this);
+			if (listener.once)
+				this.#handles.removeListener(this.kind, listener);
 		
 		clearInterval(this.#progressInterval);
 		
@@ -223,8 +223,8 @@ export class IncomingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocket
 		
 		this.error = new Error(errorMessage);
 		
-		for (const { error } of this.#listeners)
-			(error as any)?.call(...this.#callArgs, this, this.error);
+			if (listener.once)
+				this.#handles.removeListener(this.kind, listener);
 		
 		if (sendToSender)
 			this.ws.sendMessage(headers.error, this.id, errorMessage);
