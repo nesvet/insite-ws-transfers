@@ -1,6 +1,6 @@
 {
   "name": "insite-ws-transfers",
-  "version": "2.0.16",
+  "version": "2.0.17",
   "description": "inSite file transfers over WebSockets",
   "type": "module",
   "main": "./dist/node/index.js",
