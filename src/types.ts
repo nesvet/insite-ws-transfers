@@ -10,9 +10,9 @@ import type { OutgoingTransfer } from "./OutgoingTransfer";
 
 export type ParametersWithoutFirst<T extends (...args: any) => any> = T extends (first: any, ...args: infer P) => any ? P : never;
 
-export type ArrayBufferWithLength = {
+export type ArrayBufferWithLength = ArrayBuffer & {
 	length?: number;
-} & ArrayBuffer;
+};
 
 export type StreamerOptions = {
 	chunkSize?: number;
@@ -61,6 +61,12 @@ export type OutgoingTransferProps<
 		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T, error: Error): Promise<unknown> | unknown };
 };
 
+export type OutgoingTransferHandles = {
+	
+	delete(id: string): void;
+	
+};
+
 export type OutgoingTransferMethods<
 	T extends OutgoingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>
 > = {
@@ -77,6 +83,10 @@ export type OutgoingTransferTypes<
 	test: (data: OutgoingData) => boolean,
 	OutgoingTransferMethods<T>
 ][];
+
+export type WSWithTransfer<WS extends InSiteWebSocket> = WS & {
+	transfer: <T extends OutgoingTransfer<WS>, TP extends TransferTypes>(kind: string, props: OutgoingTransferProps<WS, T, TP>) => T;
+};
 
 
 export type IncomingTransportOptions = {
@@ -134,9 +144,18 @@ export type IncomingTransferListener<
 		{ (this: InSiteWebSocket, transfer: T, error: Error): Promise<unknown> | unknown } :
 		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T, error: Error): Promise<unknown> | unknown };
 	
+	once?: boolean;
+	
 };
 
+export type IncomingTransferListenerOptions = {
+	once?: boolean;
+};
 
-export type TransferHandles = {
+export type IncomingTransferHandles = {
+	
 	delete(id: string): void;
+	
+	removeListener(kind: string, listener: IncomingTransferListener<any, any>): any;
+	
 };

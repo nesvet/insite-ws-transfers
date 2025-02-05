@@ -17,6 +17,7 @@ class NodeOutgoingTransfer<
 	stream?: Readable = this.stream;
 	isBuffer?: boolean = this.isBuffer || false;
 	
+	
 	static types: OutgoingTransferTypes<NodeOutgoingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>, NodeTransferTypes> = [
 		
 		[ "stream", data => data instanceof Readable, {

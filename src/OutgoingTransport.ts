@@ -2,7 +2,12 @@ import type { InSiteWebSocket } from "insite-ws/client";
 import type { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
 import { headers } from "./common";
 import { OutgoingTransfer } from "./OutgoingTransfer";
-import type { OutgoingTransferProps, ParametersWithoutFirst, TransferTypes } from "./types";
+import type {
+	OutgoingTransferHandles,
+	OutgoingTransferProps,
+	ParametersWithoutFirst,
+	TransferTypes
+} from "./types";
 
 
 export class OutgoingTransport<
@@ -17,18 +22,28 @@ export class OutgoingTransport<
 			ws.on(`client-message:${headers.progress}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleProgress>) => this.handleProgress(wssc, ...args));
 			ws.on(`client-message:${headers.completed}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleCompleted>) => this.handleCompleted(wssc, ...args));
 			ws.on(`client-message:${headers.error}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleError>) => this.handleError(wssc, ...args));
+			
+			Object.assign(ws, {
+				transfer: (wssc: Exclude<WSORWSSC, InSiteWebSocket>, kind: string, props: OutgoingTransferProps<WSORWSSC, T, Types>) =>
+					this.transfer(wssc, kind, props)
+			});
 		} else {
 			ws.on(`message:${headers.confirm}`, (...args: ParametersWithoutFirst<typeof this.handleConfirm>) => this.handleConfirm(ws, ...args));
 			ws.on(`message:${headers.progress}`, (...args: ParametersWithoutFirst<typeof this.handleProgress>) => this.handleProgress(ws, ...args));
 			ws.on(`message:${headers.completed}`, (...args: ParametersWithoutFirst<typeof this.handleCompleted>) => this.handleCompleted(ws, ...args));
 			ws.on(`message:${headers.error}`, (...args: ParametersWithoutFirst<typeof this.handleError>) => this.handleError(ws, ...args));
+			
+			Object.assign(ws, {
+				transfer: (kind: string, props: OutgoingTransferProps<WSORWSSC, T, Types>) =>
+					this.transfer(ws, kind, props)
+			});
 		}
 		
 	}
 	
 	#transfers = new Map<string, T>();
 	
-	#transferHandles = {
+	#transferHandles: OutgoingTransferHandles = {
 		delete: (id: string) => this.#transfers.delete(id)
 	};
 	

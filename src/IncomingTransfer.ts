@@ -4,11 +4,11 @@ import { headers, progressInterval } from "./common";
 import type {
 	IncomingChunk,
 	IncomingData,
+	IncomingTransferHandles,
 	IncomingTransferListener,
 	IncomingTransferMethods,
 	IncomingTransferProps,
 	IncomingTransferTypes,
-	TransferHandles,
 	TransferTypes
 } from "./types";
 
@@ -28,7 +28,7 @@ export class IncomingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocket
 			size,
 			metadata
 		}: IncomingTransferProps<TransferTypes>,
-		handles: TransferHandles,
+		handles: IncomingTransferHandles,
 		listeners: Set<IncomingTransferListener<WSORWSSC, any>>
 	) {
 		
@@ -147,7 +147,7 @@ export class IncomingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocket
 	
 	async #process() {
 		
-		let [ chunk, length ] = this.#chunksQueue.shift()!;// eslint-disable-line prefer-const
+		let [ chunk, length ] = this.#chunksQueue.shift()!;
 		
 		if (this.#methods!.transformChunk)
 			chunk = await this.#methods!.transformChunk.call(this, chunk);
@@ -195,8 +195,12 @@ export class IncomingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocket
 		
 		await this.#methods!.done?.call(this);
 		
+		for (const listener of this.#listeners) {
 			if (listener.once)
 				this.#handles.removeListener(this.kind, listener);
+			
+			await (listener.end as any)?.call(...this.#callArgs, this);
+		}
 		
 		clearInterval(this.#progressInterval);
 		
@@ -223,8 +227,12 @@ export class IncomingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocket
 		
 		this.error = new Error(errorMessage);
 		
+		for (const listener of this.#listeners) {
 			if (listener.once)
 				this.#handles.removeListener(this.kind, listener);
+			
+			(listener.error as any)?.call(...this.#callArgs, this, this.error);
+		}
 		
 		if (sendToSender)
 			this.ws.sendMessage(headers.error, this.id, errorMessage);

@@ -4,11 +4,12 @@ import { sizeLimit as defaultSizeLimit, headers } from "./common";
 import { IncomingTransfer } from "./IncomingTransfer";
 import type {
 	IncomingChunk,
+	IncomingTransferHandles,
 	IncomingTransferListener,
+	IncomingTransferListenerOptions,
 	IncomingTransferProps,
 	IncomingTransportOptions,
 	ParametersWithoutFirst,
-	TransferHandles,
 	TransferTypes
 } from "./types";
 
@@ -38,13 +39,21 @@ export class IncomingTransport<
 			ws.on(`message:${headers.abort}`, (...args: ParametersWithoutFirst<typeof this.handleAbort>) => this.handleAbort(ws, ...args));
 		}
 		
+		Object.assign(ws, {
+			onTransfer: (kind: string, listener: IncomingTransferListener<WSORWSSC, T>, listenerOptions?: IncomingTransferListenerOptions) => this.on(kind, listener, listenerOptions),
+			onceTransfer: (kind: string, listener: IncomingTransferListener<WSORWSSC, T>, listenerOptions?: Omit<IncomingTransferListenerOptions, "once">) => this.once(kind, listener, listenerOptions)
+		});
+		
 	}
 	
 	sizeLimit;
 	
 	#listeners = new Map<string, Set<IncomingTransferListener<WSORWSSC, T>>>();
 	
-	addTransferListener(kind: string, listener: IncomingTransferListener<WSORWSSC, T>) {
+	addTransferListener(kind: string, listener: IncomingTransferListener<WSORWSSC, T>, options?: IncomingTransferListenerOptions) {
+		if (options?.once)
+			listener.once = true;
+		
 		this.#listeners.get(kind)?.add(listener) ??
 		this.#listeners.set(kind, new Set([ listener ]));
 		
@@ -58,9 +67,16 @@ export class IncomingTransport<
 	}
 	
 	removeTransferListener(kind: string, listener?: IncomingTransferListener<WSORWSSC, T>) {
-		if (listener)
-			this.#listeners.get(kind)?.delete(listener);
-		else
+		if (listener) {
+			const listeners = this.#listeners.get(kind);
+			
+			if (listeners) {
+				listeners.delete(listener);
+				
+				if (!listeners.size)
+					this.#listeners.delete(kind);
+			}
+		} else
 			this.#listeners.delete(kind);
 		
 		return this;
@@ -70,7 +86,9 @@ export class IncomingTransport<
 	
 	#transfers = new Map<string, T>();
 	
-	#transferHandles: TransferHandles = {
+	#transferHandles: IncomingTransferHandles = {
+		
+		delete: (id: string) => this.#transfers.delete(id),
 		
 		removeListener: (kind: string, listener: IncomingTransferListener<WSORWSSC, T>) => this.removeTransferListener(kind, listener)
 		

@@ -1,15 +1,15 @@
+import { uid } from "@nesvet/n";
 import type { InSiteWebSocket } from "insite-ws/client";
 import type { InSiteWebSocketServerClient } from "insite-ws/server";
-import { uid } from "@nesvet/n";
 import { chunkSize as defaultChunkSize, headers } from "./common";
 import { StringStreamer } from "./StringStreamer";
 import type { FileStreamer } from "./browser/FileStreamer";
 import type {
 	OutgoingChunk,
+	OutgoingTransferHandles,
 	OutgoingTransferMethods,
 	OutgoingTransferProps,
 	OutgoingTransferTypes,
-	TransferHandles,
 	TransferTypes
 } from "./types";
 
@@ -40,7 +40,7 @@ export class OutgoingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocket
 			onEnd,
 			onError
 		}: OutgoingTransferProps<WSORWSSC, any, any>,
-		handles: TransferHandles
+		handles: OutgoingTransferHandles
 	) {
 		
 		this.ws = ws;

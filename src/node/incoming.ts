@@ -94,7 +94,7 @@ const streamMethod: IncomingTransferMethods<NodeIncomingTransfer<InSiteWebSocket
 	}
 };
 
-class NodeIncomingTransfer<
+export class NodeIncomingTransfer<
 	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient
 > extends IncomingTransfer<WSORWSSC> {
 	
