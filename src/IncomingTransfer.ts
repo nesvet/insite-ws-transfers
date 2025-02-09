@@ -71,16 +71,16 @@ export class IncomingTransfer<WSORWSSC extends WS | WSServerClient> {
 	isAbortedByReceiver = false;
 	isTransfered = false;
 	confirmResponse?: string;
-	beginAt: null | number = null;
-	#prevChunkAt: null | number = null;
+	beginAt: number | null = null;
+	#prevChunkAt: number | null = null;
 	#chunksQueue: [ chunk: IncomingChunk, length: number ][] = [];
 	#isProcessing = false;
-	duration: null | number = null;
+	duration: number | null = null;
 	transferedSize = 0;
 	processedSize = 0;
-	bytesPerMs: null | number = null;
+	bytesPerMs: number | null = null;
 	progress = 0;
-	endAt: null | number = null;
+	endAt: number | null = null;
 	error: Error | null = null;
 	
 	[key: number | string | symbol]: unknown;
