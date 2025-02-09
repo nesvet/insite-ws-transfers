@@ -1,6 +1,6 @@
 import { uid } from "@nesvet/n";
-import type { InSiteWebSocket } from "insite-ws/client";
-import type { InSiteWebSocketServerClient } from "insite-ws/server";
+import type { WS } from "insite-ws/client";
+import type { WSServerClient } from "insite-ws/server";
 import { chunkSize as defaultChunkSize, headers } from "./common";
 import { StringStreamer } from "./StringStreamer";
 import type { FileStreamer } from "./browser/FileStreamer";
@@ -20,9 +20,9 @@ import type {
 // FIXME
 
 
-export class OutgoingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient> {
+export class OutgoingTransfer<WSORWSSC extends WS | WSServerClient> {
 	constructor(
-		ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket,
+		ws: Exclude<WSORWSSC, WS> | WS,
 		kind: string,
 		{
 			data,
@@ -273,7 +273,7 @@ export class OutgoingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocket
 	}
 	
 	
-	static types: OutgoingTransferTypes<OutgoingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>, TransferTypes> = [
+	static types: OutgoingTransferTypes<OutgoingTransfer<WS | WSServerClient>, TransferTypes> = [
 		
 		[ "object", data => typeof data == "object", {
 			

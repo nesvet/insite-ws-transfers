@@ -1,6 +1,6 @@
 import type { Readable } from "node:stream";
-import type { InSiteWebSocket } from "insite-ws/client";
-import type { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
+import type { WS } from "insite-ws/client";
+import type { WSServer, WSServerClient } from "insite-ws/server";
 import type { IncomingTransfer } from "./IncomingTransfer";
 import type { OutgoingTransfer } from "./OutgoingTransfer";
 
@@ -26,7 +26,7 @@ export type OutgoingData = Buffer | File | Readable | Record<string, any> | stri
 export type OutgoingChunk = ArrayBufferWithLength | Buffer | string;
 
 export type OutgoingTransferProps<
-	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient,
+	WSORWSSC extends WS | WSServerClient,
 	T extends OutgoingTransfer<WSORWSSC>,
 	Types extends TransferTypes
 > = {
@@ -40,25 +40,25 @@ export type OutgoingTransferProps<
 	encoding?: "base64" | "buffer" | "utf8";
 	incomingEncoding?: "base64" | "buffer" | "utf8";
 	
-	onBegin?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T): Promise<unknown> | unknown };
+	onBegin?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T): Promise<unknown> | unknown };
 	
-	onSenderProgress?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T): Promise<unknown> | unknown };
+	onSenderProgress?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T): Promise<unknown> | unknown };
 	
-	onProgress?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T): Promise<unknown> | unknown };
+	onProgress?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T): Promise<unknown> | unknown };
 	
-	onEnd?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T): Promise<unknown> | unknown };
+	onEnd?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T): Promise<unknown> | unknown };
 	
-	onError?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T, error: Error): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T, error: Error): Promise<unknown> | unknown };
+	onError?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T, error: Error): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T, error: Error): Promise<unknown> | unknown };
 };
 
 export type OutgoingTransferHandles = {
@@ -68,7 +68,7 @@ export type OutgoingTransferHandles = {
 };
 
 export type OutgoingTransferMethods<
-	T extends OutgoingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>
+	T extends OutgoingTransfer<WS | WSServerClient>
 > = {
 	setup(this: T): void;
 	confirm(this: T): void;
@@ -76,7 +76,7 @@ export type OutgoingTransferMethods<
 };
 
 export type OutgoingTransferTypes<
-	T extends OutgoingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>,
+	T extends OutgoingTransfer<WS | WSServerClient>,
 	Types extends TransferTypes
 > = [
 	type: Types,
@@ -84,8 +84,8 @@ export type OutgoingTransferTypes<
 	OutgoingTransferMethods<T>
 ][];
 
-export type WSWithTransfer<WS extends InSiteWebSocket> = WS & {
-	transfer: <T extends OutgoingTransfer<WS>, TP extends TransferTypes>(kind: string, props: OutgoingTransferProps<WS, T, TP>) => T;
+export type WSWithTransfer<W extends WS> = W & {
+	transfer: <T extends OutgoingTransfer<W>, TP extends TransferTypes>(kind: string, props: OutgoingTransferProps<W, T, TP>) => T;
 };
 
 
@@ -106,7 +106,7 @@ export type IncomingTransferProps<Types extends TransferTypes> = {
 };
 
 export type IncomingTransferMethods<
-	T extends IncomingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>
+	T extends IncomingTransfer<WS | WSServerClient>
 > = {
 	setup(this: T): void;
 	collect(this: T, chunk: IncomingChunk): void;
@@ -115,34 +115,34 @@ export type IncomingTransferMethods<
 };
 
 export type IncomingTransferTypes<
-	T extends IncomingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>,
+	T extends IncomingTransfer<WS | WSServerClient>,
 	Types extends TransferTypes
 > = Partial<Record<Types, IncomingTransferMethods<T>>>;
 
 export type IncomingTransferListener<
-	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient,
+	WSORWSSC extends WS | WSServerClient,
 	T extends IncomingTransfer<WSORWSSC>
 > = {
 	
-	begin?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T): Promise<unknown> | unknown };
+	begin?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T): Promise<unknown> | unknown };
 	
-	chunk?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T, chunk: IncomingChunk): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T, chunk: IncomingChunk): Promise<unknown> | unknown };
+	chunk?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T, chunk: IncomingChunk): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T, chunk: IncomingChunk): Promise<unknown> | unknown };
 	
-	progress?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T, chunk: IncomingChunk): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T, chunk: IncomingChunk): Promise<unknown> | unknown };
+	progress?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T, chunk: IncomingChunk): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T, chunk: IncomingChunk): Promise<unknown> | unknown };
 	
-	end?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T): Promise<unknown> | unknown };
+	end?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T): Promise<unknown> | unknown };
 	
-	error?: WSORWSSC extends InSiteWebSocket ?
-		{ (this: InSiteWebSocket, transfer: T, error: Error): Promise<unknown> | unknown } :
-		{ (this: InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, wssc: Exclude<WSORWSSC, InSiteWebSocket>, transfer: T, error: Error): Promise<unknown> | unknown };
+	error?: WSORWSSC extends WS ?
+		{ (this: WS, transfer: T, error: Error): Promise<unknown> | unknown } :
+		{ (this: WSServer<Exclude<WSORWSSC, WS>>, wssc: Exclude<WSORWSSC, WS>, transfer: T, error: Error): Promise<unknown> | unknown };
 	
 	once?: boolean;
 	

@@ -1,5 +1,5 @@
-import type { InSiteWebSocket } from "insite-ws/client";
-import type { InSiteWebSocketServerClient } from "insite-ws/server";
+import type { WS } from "insite-ws/client";
+import type { WSServerClient } from "insite-ws/server";
 import { headers, progressInterval } from "./common";
 import type {
 	IncomingChunk,
@@ -16,9 +16,9 @@ import type {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 
-export class IncomingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient> {
+export class IncomingTransfer<WSORWSSC extends WS | WSServerClient> {
 	constructor(
-		ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket,
+		ws: Exclude<WSORWSSC, WS> | WS,
 		kind: string,
 		id: string,
 		{
@@ -265,7 +265,7 @@ export class IncomingTransfer<WSORWSSC extends InSiteWebSocket | InSiteWebSocket
 	}
 	
 	
-	static types: IncomingTransferTypes<IncomingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>, TransferTypes> = {
+	static types: IncomingTransferTypes<IncomingTransfer<WS | WSServerClient>, TransferTypes> = {
 		
 		object: {
 			setup() {

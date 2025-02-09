@@ -1,4 +1,4 @@
-import type { InSiteWebSocketServerClient } from "insite-ws/server";
+import type { WSServerClient } from "insite-ws/server";
 import type {
 	IncomingTransferListener,
 	IncomingTransferListenerOptions,
@@ -12,19 +12,19 @@ import type { OutgoingTransfer } from "./outgoing";
 export type NodeTransferTypes = TransferTypes;
 
 
-type Transfer<WSSC extends InSiteWebSocketServerClient> = {
+type Transfer<WSSC extends WSServerClient> = {
 	transfer: <
 		T extends OutgoingTransfer<WSSC>,
 		TP extends NodeTransferTypes
 	>(wssc: WSSC, kind: string, props: OutgoingTransferProps<WSSC, T, TP>) => T;
 };
 
-export type WithTransfer<W, WSSC extends InSiteWebSocketServerClient> = Transfer<WSSC> & W;
+export type WithTransfer<W, WSSC extends WSServerClient> = Transfer<WSSC> & W;
 
-export type WithOptionalTransfer<W, WSSC extends InSiteWebSocketServerClient> = Partial<Transfer<WSSC>> & W;
+export type WithOptionalTransfer<W, WSSC extends WSServerClient> = Partial<Transfer<WSSC>> & W;
 
 
-type OnTransfer<WSSC extends InSiteWebSocketServerClient> = {
+type OnTransfer<WSSC extends WSServerClient> = {
 	onTransfer: <
 		T extends IncomingTransfer<WSSC>
 	>(kind: string, listener: IncomingTransferListener<WSSC, T>, options?: IncomingTransferListenerOptions) => IncomingTransport<WSSC>;
@@ -33,6 +33,6 @@ type OnTransfer<WSSC extends InSiteWebSocketServerClient> = {
 	>(kind: string, listener: IncomingTransferListener<WSSC, T>, listenerOptions?: Omit<IncomingTransferListenerOptions, "once">) => IncomingTransport<WSSC>;
 };
 
-export type WithOnTransfer<W, WSSC extends InSiteWebSocketServerClient> = OnTransfer<WSSC> & W;
+export type WithOnTransfer<W, WSSC extends WSServerClient> = OnTransfer<WSSC> & W;
 
-export type WithOptionalOnTransfer<W, WSSC extends InSiteWebSocketServerClient> = Partial<OnTransfer<WSSC>> & W;
+export type WithOptionalOnTransfer<W, WSSC extends WSServerClient> = Partial<OnTransfer<WSSC>> & W;

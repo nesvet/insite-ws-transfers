@@ -1,10 +1,12 @@
 import { Readable, type Writable } from "node:stream";
-import type { InSiteWebSocket } from "insite-ws/client";
-import type { InSiteWebSocketServerClient } from "insite-ws/server";
+import type { WS } from "insite-ws/client";
+import type { WSServerClient } from "insite-ws/server";
 import { IncomingTransfer } from "../IncomingTransfer";
 import { IncomingTransport } from "../IncomingTransport";
 import type { IncomingTransferMethods, IncomingTransferTypes } from "../types";
 import type { NodeTransferTypes } from "./types";
+
+
 export type { IncomingTransportOptions } from "../types";
 
 
@@ -33,7 +35,7 @@ class TransferStream extends Readable {
 }
 
 /** @this NodeIncomingTransfer */
-function pipeTo(this: NodeIncomingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>, writableStream: Writable) {
+function pipeTo(this: NodeIncomingTransfer<WS | WSServerClient>, writableStream: Writable) {
 	const stream = new TransferStream(writableStream);
 	
 	this.streams?.push(stream) ??
@@ -42,7 +44,7 @@ function pipeTo(this: NodeIncomingTransfer<InSiteWebSocket | InSiteWebSocketServ
 	return writableStream;
 }
 
-const streamMethod: IncomingTransferMethods<NodeIncomingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>> = {
+const streamMethod: IncomingTransferMethods<NodeIncomingTransfer<WS | WSServerClient>> = {
 	setup() {
 		
 		if (!this.encoding)
@@ -95,7 +97,7 @@ const streamMethod: IncomingTransferMethods<NodeIncomingTransfer<InSiteWebSocket
 };
 
 export class NodeIncomingTransfer<
-	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient
+	WSORWSSC extends WS | WSServerClient
 > extends IncomingTransfer<WSORWSSC> {
 	
 	streams?: TransferStream[];
@@ -103,7 +105,7 @@ export class NodeIncomingTransfer<
 	pipeTo?: (this: NodeIncomingTransfer<WSORWSSC>, writableStream: Writable) => void = this.pipeTo;
 	
 	
-	static types: IncomingTransferTypes<NodeIncomingTransfer<InSiteWebSocket | InSiteWebSocketServerClient>, NodeTransferTypes> = {
+	static types: IncomingTransferTypes<NodeIncomingTransfer<WS | WSServerClient>, NodeTransferTypes> = {
 		
 		stream: streamMethod,
 		
@@ -115,7 +117,7 @@ export class NodeIncomingTransfer<
 }
 
 class NodeIncomingTransport<
-	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient
+	WSORWSSC extends WS | WSServerClient
 > extends IncomingTransport<WSORWSSC, NodeIncomingTransfer<WSORWSSC>, NodeTransferTypes> {
 	
 	static Transfer = NodeIncomingTransfer;

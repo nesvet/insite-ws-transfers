@@ -1,6 +1,6 @@
-import type { InSiteWebSocket } from "insite-ws/client";
-import type { InSiteWebSocketServer, InSiteWebSocketServerClient } from "insite-ws/server";
-import { sizeLimit as defaultSizeLimit, headers } from "./common";
+import type { WS } from "insite-ws/client";
+import type { WSServer, WSServerClient } from "insite-ws/server";
+import { headers, sizeLimit as defaultSizeLimit } from "./common";
 import { IncomingTransfer } from "./IncomingTransfer";
 import type {
 	IncomingChunk,
@@ -15,11 +15,11 @@ import type {
 
 
 export class IncomingTransport<
-	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient,
+	WSORWSSC extends WS | WSServerClient,
 	T extends IncomingTransfer<WSORWSSC>,
 	Types extends TransferTypes = TransferTypes
 > {
-	constructor(ws: InSiteWebSocket | InSiteWebSocketServer<Exclude<WSORWSSC, InSiteWebSocket>>, options: IncomingTransportOptions = {}) {
+	constructor(ws: WS | WSServer<Exclude<WSORWSSC, WS>>, options: IncomingTransportOptions = {}) {
 		
 		const {
 			sizeLimit = defaultSizeLimit
@@ -28,10 +28,10 @@ export class IncomingTransport<
 		this.sizeLimit = sizeLimit;
 		
 		if (ws.isWebSocketServer) {
-			ws.on(`client-message:${headers.request}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleRequest>) => this.handleRequest(wssc, ...args));
-			ws.on(`client-message:${headers.chunk}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleChunk>) => this.handleChunk(wssc, ...args));
-			ws.on(`client-message:${headers.sent}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleSent>) => this.handleSent(wssc, ...args));
-			ws.on(`client-message:${headers.abort}`, (wssc: Exclude<WSORWSSC, InSiteWebSocket>, ...args: ParametersWithoutFirst<typeof this.handleAbort>) => this.handleAbort(wssc, ...args));
+			ws.on(`client-message:${headers.request}`, (wssc: Exclude<WSORWSSC, WS>, ...args: ParametersWithoutFirst<typeof this.handleRequest>) => this.handleRequest(wssc, ...args));
+			ws.on(`client-message:${headers.chunk}`, (wssc: Exclude<WSORWSSC, WS>, ...args: ParametersWithoutFirst<typeof this.handleChunk>) => this.handleChunk(wssc, ...args));
+			ws.on(`client-message:${headers.sent}`, (wssc: Exclude<WSORWSSC, WS>, ...args: ParametersWithoutFirst<typeof this.handleSent>) => this.handleSent(wssc, ...args));
+			ws.on(`client-message:${headers.abort}`, (wssc: Exclude<WSORWSSC, WS>, ...args: ParametersWithoutFirst<typeof this.handleAbort>) => this.handleAbort(wssc, ...args));
 		} else {
 			ws.on(`message:${headers.request}`, (...args: ParametersWithoutFirst<typeof this.handleRequest>) => this.handleRequest(ws, ...args));
 			ws.on(`message:${headers.chunk}`, (...args: ParametersWithoutFirst<typeof this.handleChunk>) => this.handleChunk(ws, ...args));
@@ -95,7 +95,7 @@ export class IncomingTransport<
 	};
 	
 	private handleRequest(
-		ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket,
+		ws: Exclude<WSORWSSC, WS> | WS,
 		kind: string,
 		id: string,
 		{ type, size, metadata, ...restProps }: IncomingTransferProps<Types>
@@ -128,17 +128,17 @@ export class IncomingTransport<
 		
 	}
 	
-	private handleChunk(ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket, id: string, chunk: IncomingChunk, length = chunk.length) {
+	private handleChunk(ws: Exclude<WSORWSSC, WS> | WS, id: string, chunk: IncomingChunk, length = chunk.length) {
 		this.#transfers.get(id)?.handleChunk(chunk, length);
 		
 	}
 	
-	private handleSent(ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket, id: string) {
+	private handleSent(ws: Exclude<WSORWSSC, WS> | WS, id: string) {
 		this.#transfers.get(id)?.handleSent();
 		
 	}
 	
-	private handleAbort(ws: Exclude<WSORWSSC, InSiteWebSocket> | InSiteWebSocket, id: string) {
+	private handleAbort(ws: Exclude<WSORWSSC, WS> | WS, id: string) {
 		this.#transfers.get(id)?.abort(true);
 		
 	}

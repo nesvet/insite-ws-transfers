@@ -1,4 +1,4 @@
-import type { InSiteWebSocket } from "insite-ws/client";
+import type { WS } from "insite-ws/client";
 import type {
 	IncomingTransferListener,
 	IncomingTransferListenerOptions,
@@ -12,27 +12,27 @@ import type { OutgoingTransfer } from "./outgoing";
 export type BrowserTransferTypes = Exclude<TransferTypes, "stream">;
 
 
-type Transfer<WS extends InSiteWebSocket> = {
+type Transfer<W extends WS> = {
 	transfer: <
-		T extends OutgoingTransfer<WS>,
+		T extends OutgoingTransfer<W>,
 		TP extends BrowserTransferTypes
-	>(ws: WS, kind: string, props: OutgoingTransferProps<WS, T, TP>) => T;
+	>(ws: W, kind: string, props: OutgoingTransferProps<W, T, TP>) => T;
 };
 
-export type WithTransfer<WS extends InSiteWebSocket> = Transfer<WS> & WS;
+export type WithTransfer<W extends WS> = Transfer<W> & W;
 
-export type WithOptionalTransfer<WS extends InSiteWebSocket> = Partial<Transfer<WS>> & WS;
+export type WithOptionalTransfer<W extends WS> = Partial<Transfer<W>> & W;
 
 
-type OnTransfer<WS extends InSiteWebSocket> = {
+type OnTransfer<W extends WS> = {
 	onTransfer: <
-		T extends IncomingTransfer<WS>
-	>(kind: string, listener: IncomingTransferListener<WS, T>, options?: IncomingTransferListenerOptions) => IncomingTransport<WS>;
+		T extends IncomingTransfer<W>
+	>(kind: string, listener: IncomingTransferListener<W, T>, options?: IncomingTransferListenerOptions) => IncomingTransport<W>;
 	onceTransfer: <
-		T extends IncomingTransfer<WS>
-	>(kind: string, listener: IncomingTransferListener<WS, T>, listenerOptions?: Omit<IncomingTransferListenerOptions, "once">) => IncomingTransport<WS>;
+		T extends IncomingTransfer<W>
+	>(kind: string, listener: IncomingTransferListener<W, T>, listenerOptions?: Omit<IncomingTransferListenerOptions, "once">) => IncomingTransport<W>;
 };
 
-export type WithOnTransfer<WS extends InSiteWebSocket> = OnTransfer<WS> & WS;
+export type WithOnTransfer<W extends WS> = OnTransfer<W> & W;
 
-export type WithOptionalOnTransfer<WS extends InSiteWebSocket> = Partial<OnTransfer<WS>> & WS;
+export type WithOptionalOnTransfer<W extends WS> = Partial<OnTransfer<W>> & W;

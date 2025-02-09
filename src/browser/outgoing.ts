@@ -1,5 +1,5 @@
-import type { InSiteWebSocket } from "insite-ws/client";
-import type { InSiteWebSocketServerClient } from "insite-ws/server";
+import type { WS } from "insite-ws/client";
+import type { WSServerClient } from "insite-ws/server";
 import { OutgoingTransfer } from "../OutgoingTransfer";
 import { OutgoingTransport } from "../OutgoingTransport";
 import type { OutgoingTransferTypes } from "../types";
@@ -9,10 +9,10 @@ import type { BrowserTransferTypes } from "./types";
 
 
 class BrowserOutgoingTransfer<
-	WSORWSSC extends InSiteWebSocket | InSiteWebSocketServerClient = InSiteWebSocket
+	WSORWSSC extends WS | WSServerClient = WS
 > extends OutgoingTransfer<WSORWSSC> {
 	
-	static types: OutgoingTransferTypes<BrowserOutgoingTransfer<InSiteWebSocket>, BrowserTransferTypes> = [
+	static types: OutgoingTransferTypes<BrowserOutgoingTransfer<WS>, BrowserTransferTypes> = [
 		
 		[ "file", data => typeof data == "object" && data instanceof File, {
 			
@@ -50,14 +50,14 @@ class BrowserOutgoingTransfer<
 			}
 		} ],
 		
-		...OutgoingTransfer.types as OutgoingTransferTypes<OutgoingTransfer<InSiteWebSocket>, BrowserTransferTypes>
+		...OutgoingTransfer.types as OutgoingTransferTypes<OutgoingTransfer<WS>, BrowserTransferTypes>
 		
 	];
 	
 }
 
 class BrowserOutgoingTransport<
-	WSORWSSC extends InSiteWebSocket = InSiteWebSocket
+	WSORWSSC extends WS = WS
 > extends OutgoingTransport<WSORWSSC, BrowserOutgoingTransfer<WSORWSSC>, BrowserTransferTypes> {
 	
 	static Transfer = BrowserOutgoingTransfer;
