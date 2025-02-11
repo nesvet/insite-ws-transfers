@@ -31,11 +31,11 @@
   "license": "MIT",
   "dependencies": {
     "@nesvet/n": "^1.1.22",
-    "insite-ws": "^2.1.0",
+    "insite-ws": "^2.1.2",
     "mime": "^4.0.6"
   },
   "devDependencies": {
-    "@nesvet/conveyer": "^2.4.2",
+    "@nesvet/conveyer": "^2.4.3",
     "@nesvet/eslint-config": "^2.0.47",
     "@types/node": "^22.13.1",
     "@types/ws": "^8.5.14",
