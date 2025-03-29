@@ -126,7 +126,6 @@ export class IncomingTransfer<WSORWSSC extends WS | WSServerClient> {
 			
 		}, progressInterval);
 		
-		return null;
 	}
 	
 	handleChunk(chunk: IncomingChunk, length = chunk.length) {
